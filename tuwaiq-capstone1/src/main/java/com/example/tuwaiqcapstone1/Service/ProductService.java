@@ -90,16 +90,27 @@ public class ProductService {
 
     // Endpoint 3 - filter by category
     public ArrayList<Product> filterCategory(String categoryID) {
+
+        // First: confirm the category actually exists
+        boolean categoryExists = false;
+        for (Category category : categoryService.getCategories()) {
+            if (category.getId().equals(categoryID)) {
+                categoryExists = true;
+                break;
+            }
+        }
+        if (!categoryExists) {
+            return null; // signals "category not found"
+        }
+
+        // Second: collect matching products
         ArrayList<Product> result = new ArrayList<>();
         for (Product product : products) {
             if (product.getCategoryID().equals(categoryID)) {
                 result.add(product);
             }
         }
-        if (result.isEmpty()) {
-            return null;
-        }
-        return result;
+        return result; // may be empty — category exists but has no products yet
     }
 
     // Endpoint 4 - get all products that belong to a specific merchant (via merchantStocks)
@@ -129,6 +140,15 @@ public class ProductService {
         for (User user : userService.getUsers()) {
             if (user.getId().equals(review.getUserID())) {
                 userExists = true;
+                // Check if user has actually purchased this product
+                boolean hasPurchased = false;
+                for (String pid : user.getPurchasedProductIDs()) {
+                    if (pid.equals(review.getProductID())) {
+                        hasPurchased = true;
+                        break;
+                    }
+                }
+                if (!hasPurchased) return 4; // user hasn't bought this product
                 break;
             }
         }
@@ -182,6 +202,8 @@ public class ProductService {
         for (Product product : products) {
             if (product.getId().equals(productID)) {
                 product.setDiscount(discountPercent);
+                // Always compute from original price — no double-discount possible
+                product.setPriceAfterDiscount(product.getPrice() * (1 - discountPercent / 100));
                 return 0;
             }
         }
@@ -261,5 +283,33 @@ public class ProductService {
         }
 
         return result;
+    }
+    // Endpoint 11 - get purchase history
+
+    public ArrayList<Product> getPurchaseHistory(String userID) {
+        User foundUser = null;
+        // Find the user to get their purchased IDs
+        for (User user : userService.getUsers()) {
+            if (user.getId().equals(userID)) {
+                foundUser = user;
+                break;
+            }
+        }
+
+        if (foundUser == null) {
+            return null; // Signals user not found
+        }
+
+        ArrayList<Product> history = new ArrayList<>();
+        // Iterate through the user's purchased IDs and find the matching products
+        for (String pid : foundUser.getPurchasedProductIDs()) {
+            for (Product product : products) {
+                if (product.getId().equals(pid)) {
+                    history.add(product);
+                    break;
+                }
+            }
+        }
+        return history;
     }
 }

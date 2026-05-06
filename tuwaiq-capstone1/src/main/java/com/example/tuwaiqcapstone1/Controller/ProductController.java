@@ -75,7 +75,10 @@ public class ProductController {
     public ResponseEntity<?> filterCategory(@PathVariable String categoryID) {
         ArrayList<Product> result = productService.filterCategory(categoryID);
         if (result == null) {
-            return ResponseEntity.status(404).body(new ApiResponse("No products found for this category"));
+            return ResponseEntity.status(404).body(new ApiResponse("Category not found"));
+        }
+        if (result.isEmpty()) {
+            return ResponseEntity.status(200).body(new ApiResponse("Category exists but has no products yet"));
         }
         return ResponseEntity.status(200).body(result);
     }
@@ -105,6 +108,7 @@ public class ProductController {
         if (result == 1) return ResponseEntity.status(404).body(new ApiResponse("User not found"));
         if (result == 2) return ResponseEntity.status(404).body(new ApiResponse("Product not found"));
         if (result == 3) return ResponseEntity.status(400).body(new ApiResponse("Review ID already exists"));
+        if (result == 4) return ResponseEntity.status(403).body(new ApiResponse("You must purchase the product before reviewing it"));
         return ResponseEntity.status(400).body(new ApiResponse("Could not add review"));
     }
 
@@ -154,5 +158,20 @@ public class ProductController {
         ArrayList<Product> sorted = new ArrayList<>(productService.getProducts());
         sorted.sort((p1, p2) -> Double.compare(p2.getRating(), p1.getRating()));
         return sorted.isEmpty() ? null : sorted;
+    }
+
+
+    // Endpoint 11: Get full product details for everything a user has bought
+    @GetMapping("/history/{userID}")
+    public ResponseEntity<?> getPurchaseHistory(@PathVariable String userID) {
+        ArrayList<Product> result = productService.getPurchaseHistory(userID);
+
+        if (result == null) {
+            return ResponseEntity.status(404).body(new ApiResponse("User not found"));
+        }
+        if (result.isEmpty()) {
+            return ResponseEntity.status(200).body(new ApiResponse("No purchase history found for this user"));
+        }
+        return ResponseEntity.status(200).body(result);
     }
 }

@@ -129,16 +129,20 @@ public class MerchantStockService {
             return "Product is out of stock";
         }
 
-        double originalPrice = foundProduct.getPrice();
-        double discountPercentage = foundProduct.getDiscount();
-        double finalPrice = originalPrice - (originalPrice * (discountPercentage / 100));
+        double effectivePrice = (foundProduct.getDiscount() > 0)
+                ? foundProduct.getPriceAfterDiscount()
+                : foundProduct.getPrice();
 
-        if (foundUser.getBalance() < finalPrice) {
+        if (foundUser.getBalance() < effectivePrice) {
             return "Insufficient balance";
         }
 
         foundStock.setStock(foundStock.getStock() - 1);
-        foundUser.setBalance(foundUser.getBalance() - finalPrice);
+        foundUser.setBalance(foundUser.getBalance() - effectivePrice);
+
+        if (!foundUser.getPurchasedProductIDs().contains(productID)) {
+            foundUser.getPurchasedProductIDs().add(productID);
+        }
 
         return "Purchase successful";
     }

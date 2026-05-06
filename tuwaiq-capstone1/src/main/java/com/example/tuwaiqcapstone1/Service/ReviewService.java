@@ -35,6 +35,15 @@ public class ReviewService {
         for (User user : userService.getUsers()) {
             if (user.getId().equals(review.getUserID())) {
                 userExists = true;
+                // Check if user has actually purchased this product
+                boolean hasPurchased = false;
+                for (String pid : user.getPurchasedProductIDs()) {
+                    if (pid.equals(review.getProductID())) {
+                        hasPurchased = true;
+                        break;
+                    }
+                }
+                if (!hasPurchased) return 4; // user hasn't bought this product
                 break;
             }
         }

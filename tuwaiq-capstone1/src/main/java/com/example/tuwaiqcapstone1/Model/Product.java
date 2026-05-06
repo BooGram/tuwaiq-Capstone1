@@ -22,4 +22,5 @@ public class Product {
     private String categoryID;
     private double discount = 0;
     private double rating = 0;
+    private double priceAfterDiscount = 0; // 0 means no discount is active
 }
